@@ -14,7 +14,7 @@ This service has endpoints that accept credentials using Basic Auth, meaning the
 
 ``make``
 
-The project uses a makefile to order its build steps, and Scala codegen, which is included as unmanaged source in the build. For this reason it's required to build with make in order to ensure that generated source is available when the sbt build starts.
+The project uses a makefile to order its build steps, and Scala codegen, which is included as unmanaged source in the build. For this reason it's required to build with `make` in order to ensure that generated source is available when the `sbt` build starts.
 
 ## Docs
 
