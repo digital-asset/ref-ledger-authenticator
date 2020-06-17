@@ -1,0 +1,21 @@
+# Copyright (c) 2020 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
+# SPDX-License-Identifier: Apache-2.0
+
+sdk-version: 1.2.0
+name: authentication-service
+version: 3.0.0
+source: daml
+parties:
+- AuthenticationServiceOperator
+exposed-modules:
+- DABL.AuthenticationService.V3
+- AuthenticationServiceModule
+dependencies:
+- daml-prim
+- daml-stdlib
+codegen:
+  scala:
+    package-prefix: com.projectdabl.authenticationservice.model
+    output-directory: scala-codegen/src/main/scala
+    verbosity: 2
+

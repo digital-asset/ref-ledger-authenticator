@@ -1,0 +1,87 @@
+-- Copyright (c) 2020 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
+-- SPDX-License-Identifier: Apache-2.0
+
+daml 1.2
+module Test.AuthenticationService.V3 where
+
+import DA.Date
+
+import DABL.AuthenticationService.V3
+
+createOrFetchOperatorTest =
+  scenario do
+    operator <- getParty "operator"
+
+    submit operator do
+      operatorCid <- lookupByKey @Operator operator
+      case operatorCid of
+        Some cid -> return cid
+        None -> create Operator with ..
+
+createUserMappingTest userId party =
+  scenario do
+    operator <- getParty "operator"
+    serviceOperatorCid <- createOrFetchOperatorTest
+
+    submit operator do
+      exercise serviceOperatorCid OperatorUpsertPartyAssociation
+        with
+          userId = userId
+          maybeNewUser = party
+
+userDuplicatedRegistration =
+  scenario do
+    operator <- getParty "operator"
+    firstParty <- getParty "first-party"
+    secondParty <- getParty "second-party"
+    firstUserCid <- createUserMappingTest "idp|ident-one" firstParty
+    secondUserCid <- createUserMappingTest "idp|ident-one" secondParty
+
+    submit operator do
+      fetch firstUserCid
+      fetch secondUserCid
+
+userRequestAndReceiveServiceAccount =
+  scenario do
+    operator <- getParty "operator"
+    newServiceAccount <- getParty "new-sa"
+    party <- getParty "sb"
+    userCid <- createUserMappingTest "idp|e-mail" party
+
+    saRequestCid <- submit party do
+      exercise userCid UserRequestServiceAccount
+        with
+          ledgerId = "ledger-1"
+          nonce = "123"
+    submit operator do
+      exercise saRequestCid ServiceAccountRequestAccept
+        with
+          newServiceAccount = newServiceAccount
+
+userRequestServiceAccountRequestAndReceiveCredential =
+  scenario do
+    operator <- getParty "operator"
+    serviceAccountCid <- userRequestAndReceiveServiceAccount
+    saRec <- submit operator do
+      saRecInner <- fetch serviceAccountCid
+      assert $ saRecInner.operator == operator
+      return saRecInner
+    saCredReqCid <- submit saRec.owner do
+      exercise serviceAccountCid ServiceAccountRequestCredential
+    submit operator do
+      exercise saCredReqCid ServiceAccountCredentialGrant
+        with
+          credentialId = "foo"
+          credentialSalt = "bar"
+          credentialHash = "cred"
+          validFrom = datetime 1970 Jan 1 0 0 0
+          validTo = datetime 1971 Jan 1 0 0 0
+
+userReadsGrantedHash =
+  scenario do
+    operator <- getParty "operator"
+    hashCid <- userRequestServiceAccountRequestAndReceiveCredential
+    hashRecord <- submit operator do
+      fetch hashCid
+    submit hashRecord.owner do
+      fetch hashCid

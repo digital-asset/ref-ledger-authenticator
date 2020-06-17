@@ -1,0 +1,121 @@
+# Scala CircleCI 2.0 configuration file
+#
+# Check https://circleci.com/docs/2.0/sample-config/ for more details
+#
+version: 2.1
+
+commands:
+  install_sdk:
+    description: "Install the DAML SDK"
+    parameters:
+      version:
+        type: string
+    steps:
+      - run:
+          command: |
+            cd ${HOME}
+            wget https://github.com/digital-asset/daml/releases/download/v<< parameters.version >>/daml-sdk-<< parameters.version >>-linux.tar.gz
+            tar -zxvf daml-sdk-<< parameters.version >>-linux.tar.gz
+            cd sdk-<< parameters.version >>
+            ./install.sh
+            cd ${HOME}
+            rm -rf sdk-<< parameters.version >>
+
+jobs:
+  build:
+    parameters:
+      daml_sdk_version:
+        type: string  
+    docker:
+      - image: circleci/openjdk:11.0-jdk
+
+    working_directory: ~/repo
+
+    environment:
+      # Customize the JVM maximum heap limit
+      JVM_OPTS: -Xmx3200m
+      TERM: dumb
+    steps:
+      - checkout
+      # Download and cache sbt dependencies
+      - restore_cache:
+          keys:
+            - v1-dependencies-{{ checksum "build.sbt" }}
+            # fallback to using the latest cache if no exact match is found
+            - v1-dependencies-
+      - install_sdk:
+          version: << parameters.daml_sdk_version >>            
+      - run: 
+           name: Build
+           command: |
+             export PATH=${HOME}/.daml/bin:${PATH}
+             make build
+      - run: 
+           name: Test
+           command: |
+             export PATH=${HOME}/.daml/bin:${PATH}
+             make test
+      - save_cache:
+          paths:
+            - ~/.m2
+          key: v1-dependencies--{{ checksum "build.sbt" }}             
+
+  blackduck_scan:
+    parameters:
+      daml_sdk_version:
+        type: string  
+    docker:
+      - image: circleci/openjdk:11.0-jdk
+
+    working_directory: ~/repo
+
+    environment:
+      # Customize the JVM maximum heap limit
+      JVM_OPTS: -Xmx3200m
+      TERM: dumb
+
+    steps:
+      - checkout
+
+      # Download and cache sbt dependencies
+      - restore_cache:
+          keys:
+            - v1-dependencies-{{ checksum "build.sbt" }}
+            # fallback to using the latest cache if no exact match is found
+            - v1-dependencies-
+      - install_sdk:
+          version: << parameters.daml_sdk_version >>
+      - run: 
+           name: Build
+           command: |
+             export PATH=${HOME}/.daml/bin:${PATH}
+             make build
+      - run:
+          name: Run Blackduck Detect
+          command: |
+            bash <(curl -s https://raw.githubusercontent.com/DACH-NY/security-blackduck/master/synopsys-detect) \
+            ci-build digitalasset_ref-ledger-authenticator master \
+            --logging.level.com.synopsys.integration=DEBUG \
+            --detect.excluded.detector.types=SBT \
+            --detect.notices.report=true \
+            --detect.report.timeout=480 \
+            
+workflows:
+  version: 2
+  build_and_test:
+    jobs:
+      - build:
+          daml_sdk_version: "1.2.0"
+
+  blackduck:
+    triggers:
+      - schedule:
+          cron: "0 0 * * 1-5"
+          filters:
+            branches:
+              only:
+                - master
+    jobs:
+      - blackduck_scan:
+          daml_sdk_version: "1.2.0"
+          context: blackduck

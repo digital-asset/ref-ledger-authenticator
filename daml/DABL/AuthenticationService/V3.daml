@@ -1,0 +1,186 @@
+-- Copyright (c) 2020 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
+-- SPDX-License-Identifier: Apache-2.0
+
+daml 1.2
+
+module DABL.AuthenticationService.V3 where
+
+import DA.List as L
+
+template Operator
+  with
+    operator : Party
+  where
+    signatory operator
+
+    key operator : Party
+    maintainer key
+
+    controller operator can
+      nonconsuming OperatorFetchUser : (ContractId User, User)
+        with
+          userId : Text
+        do
+          fetchByKey @User (operator, userId)
+
+      nonconsuming OperatorUpsertPartyAssociation : ContractId User
+        with
+          userId         : Text
+          maybeNewUser   : Party -- discarded if there exists an old user
+        do
+          userOpt <- lookupByKey @User (operator, userId)
+          case userOpt of
+            None -> create User with user = maybeNewUser, ..
+            Some existingUserCid -> pure existingUserCid
+
+      nonconsuming OperatorFetchServiceAccount : (ContractId ServiceAccount, ServiceAccount)
+        with serviceAccountToFetch : Party
+        do fetchByKey @ServiceAccount (operator, serviceAccountToFetch)
+
+      nonconsuming OperatorFetchServiceAccountCredentialHash : (ContractId ServiceAccountCredentialHash, 
+                                                                ServiceAccountCredentialHash)
+        with credentialId : Text
+        do fetchByKey @ServiceAccountCredentialHash (operator, credentialId)
+
+template ServiceAccount
+  with
+    operator         : Party
+    owner            : Party -- points to owning User
+    ledgerId         : Text
+    nonce            : Text
+    serviceAccount   : Party -- NOTE: token granting system is hooked up to give access to this party
+    credentialIds    : [Text]
+  where
+    signatory operator, owner
+
+    observer serviceAccount
+
+    key (operator, serviceAccount) : (Party, Party)
+    maintainer key._1
+
+    controller owner can
+      nonconsuming ServiceAccountRequestCredential : ContractId ServiceAccountCredentialRequest
+        do create ServiceAccountCredentialRequest with ..
+
+    controller operator can
+      OperatorServiceAccountCredentialIdAppend : ContractId ServiceAccount
+        with credentialId : Text
+        do create this with
+            credentialIds = dedup $ credentialId :: credentialIds
+
+template ServiceAccountCredentialHash
+  with
+    operator       : Party
+    owner          : Party
+    ledgerId       : Text
+    nonce          : Text
+    serviceAccount : Party
+    credentialId   : Text
+    credentialSalt : Text
+    credentialHash : Text
+    validFrom      : Time
+    validTo        : Time
+  where
+    signatory operator, owner
+    key (operator, credentialId): (Party, Text)
+    maintainer key._1
+
+    controller owner can
+      OwnerServiceAccountCredentialHashArchive : ()
+        do return ()
+
+    controller operator can
+      OperatorServiceAccountCredentialHashArchive : ()
+        do return ()
+
+template ServiceAccountCredentialRequest
+  with
+    operator       : Party
+    owner          : Party
+    serviceAccount : Party
+    ledgerId       : Text
+    nonce          : Text
+  where
+    signatory owner
+
+    controller owner can
+      ServiceAccountCredentialRequestWithdraw : ()
+        do return ()
+
+    controller operator can
+      ServiceAccountCredentialGrant : ContractId ServiceAccount
+        with
+          credentialId   : Text
+          credentialSalt : Text
+          credentialHash : Text
+          validFrom      : Time
+          validTo        : Time
+        do
+          hashCid <- create ServiceAccountCredentialHash with ..
+          (requestingSACid, requestingSA) <- fetchByKey @ServiceAccount (operator, serviceAccount)
+          exercise requestingSACid $ OperatorServiceAccountCredentialIdAppend credentialId
+
+      ServiceAccountCredentialReject : ()
+        do return ()
+
+template ServiceAccountRequest
+  with
+    operator : Party
+    user     : Party
+    ledgerId : Text
+    nonce    : Text
+  where
+    signatory user
+
+    controller user can
+      ServiceAccountRequestWithdraw : ()
+        do return ()
+
+    controller operator can
+      ServiceAccountRequestAccept : ContractId ServiceAccount
+        with
+          newServiceAccount : Party
+        do
+          create ServiceAccount with
+            owner = user
+            serviceAccount = newServiceAccount
+            credentialIds = []
+            ..
+
+      ServiceAccountRequestReject : ()
+        do return ()
+
+template User
+  with
+    operator      : Party
+    user          : Party
+    userId        : Text
+  where
+    signatory operator
+
+    observer user
+
+    key (operator, userId) : (Party, Text)
+    maintainer key._1
+
+    controller operator can
+      UserRevoke : ()
+        do return ()
+
+    controller user can
+      nonconsuming UserRequestServiceAccount : ContractId ServiceAccountRequest
+        with
+          ledgerId : Text
+          nonce    : Text
+        do create ServiceAccountRequest with ..
+
+      nonconsuming UserFetchServiceAccount : (ContractId ServiceAccount, ServiceAccount)
+        with serviceAccountToFetch : Party
+        do fetchByKey @ServiceAccount (operator, serviceAccountToFetch)
+
+      nonconsuming UserFetchServiceAccountCredentialHash :
+        (ContractId ServiceAccountCredentialHash,
+         ServiceAccountCredentialHash)
+          with serviceAccountCredentialHashId : Text
+          do fetchByKey @ServiceAccountCredentialHash (operator, serviceAccountCredentialHashId)
+

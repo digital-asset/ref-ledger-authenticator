@@ -1,0 +1,58 @@
+// Copyright (c) 2020 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
+// SPDX-License-Identifier: Apache-2.0
+
+package com.projectdabl.authenticationservice.config
+
+import java.net.URL
+import java.time.Duration
+
+import com.typesafe.config.Config
+
+object AuthenticationServiceConfig {
+  def apply(config: Config): AuthenticationServiceConfig =
+    AuthenticationServiceConfig(
+      ServiceConfig(
+        address = config.getString("service.address"),
+        port = config.getInt("service.port"),
+        allowedConsoleOrigin = config.getString("service.allowedConsoleOrigin")
+      ),
+      LedgerConfig(
+        ledgerUrl = config.getString("ledger.url"),
+        preloadPath = config.getString("ledger.preloadPath"),
+        serviceParty = config.getString("ledger.serviceParty")
+      ),
+      JwtConfig(
+        issuer = config.getString("jwt.issuer"),
+        validityDuration = config.getDuration("jwt.validityDuration")
+      ),
+      JwksConfig(
+        new URL(config.getString("jwks.endpoint")), // note: throws
+        connTimeout = config.getDuration("jwks.connTimeout"),
+        readTimeout = config.getDuration("jwks.readTimeout")
+      ),
+      ServiceAccountConfig(
+        config.getDuration("serviceAccount.validityDuration"),
+        config.getInt("serviceAccount.credLength"),
+        config.getInt("serviceAccount.saltLength")
+      )
+    )
+}
+
+final case class AuthenticationServiceConfig(
+  serviceConfig: ServiceConfig,
+  ledgerConfig: LedgerConfig,
+  jwtConfig: JwtConfig,
+  jwksConfig: JwksConfig,
+  serviceAccountConfig: ServiceAccountConfig
+)
+
+final case class ServiceConfig(address: String, port: Int, allowedConsoleOrigin: String)
+
+final case class LedgerConfig(ledgerUrl: String, preloadPath: String, serviceParty: String)
+
+final case class JwtConfig(issuer: String, validityDuration: Duration)
+
+final case class JwksConfig(endpoint: URL, connTimeout: Duration, readTimeout: Duration)
+
+final case class ServiceAccountConfig(validityDuration: Duration, credLength: Int, saltLength: Int)
+
