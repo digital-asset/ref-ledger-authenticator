@@ -1,4 +1,4 @@
- [![CircleCI](https://circleci.com/gh/digital-asset/ref-ledger-authenticator.svg?style=svg&circle-token=99ffcb3092d49a5b66dea330bfe4dc32635a1343)](https://circleci.com/gh/digital-asset/ref-ledger-authenticator)
+ [![CircleCI](https://circleci.com/gh/digital-asset/ref-ledger-authenticator.svg?style=svg&circle-token=497982398f9702a8cb6368ee05e175de01926bbf)](https://circleci.com/gh/digital-asset/ref-ledger-authenticator)
  [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://github.com/digital-asset/ref-ledger-authenticator/blob/master/LICENSE)
 
 # Reference Ledger Authenticator
