@@ -84,6 +84,7 @@ jobs:
       - run:
           name: release-jar-to-github
           command: |
+            export PATH=${HOME}/.daml/bin:${PATH}
             VERSION="0.0.0-snapshot-$(git show -s --format=%cd --date=format:%Y%m%d HEAD).$(git rev-list --count HEAD).$(git show -s --format=%h --abbrev=8 HEAD)"
             sed -i "s/version :=.*/version := \"$VERSION\"/" build.sbt
             make assembly
