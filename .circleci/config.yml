@@ -25,7 +25,7 @@ jobs:
   build:
     parameters:
       daml_sdk_version:
-        type: string  
+        type: string
     docker:
       - image: circleci/openjdk:11.0-jdk
 
@@ -44,13 +44,13 @@ jobs:
             # fallback to using the latest cache if no exact match is found
             - v1-dependencies-
       - install_sdk:
-          version: << parameters.daml_sdk_version >>            
-      - run: 
+          version: << parameters.daml_sdk_version >>
+      - run:
            name: Build
            command: |
              export PATH=${HOME}/.daml/bin:${PATH}
              make build
-      - run: 
+      - run:
            name: Test
            command: |
              export PATH=${HOME}/.daml/bin:${PATH}
@@ -58,12 +58,61 @@ jobs:
       - save_cache:
           paths:
             - ~/.m2
-          key: v1-dependencies--{{ checksum "build.sbt" }}             
+          key: v1-dependencies--{{ checksum "build.sbt" }}
+
+  release_to_github:
+    parameters:
+      daml_sdk_version:
+        type: string
+    docker:
+      - image: circleci/openjdk:11.0-jdk
+    working_directory: ~/repo
+    environment:
+      # Customize the JVM maximum heap limit
+      JVM_OPTS: -Xmx3200m
+      TERM: dumb
+    steps:
+      - checkout
+      # Download and cache sbt dependencies
+      - restore_cache:
+          keys:
+            - v1-dependencies-{{ checksum "build.sbt" }}
+            # fallback to using the latest cache if no exact match is found
+            - v1-dependencies-
+      - install_sdk:
+          version: << parameters.daml_sdk_version >>
+      - run:
+          name: release-jar-to-github
+          command: |
+            VERSION="0.0.0-snapshot-$(git show -s --format=%cd --date=format:%Y%m%d HEAD).$(git rev-list --count HEAD).$(git show -s --format=%h --abbrev=8 HEAD)"
+            sed -i "s/version :=.*/version := \"$VERSION\"/" build.sbt
+            make assembly
+            git tag v$VERSION
+            RESPONSE=$(curl --fail \
+                            --silent \
+                            --location \
+                            -H "Authorization: token $GITHUB_TOKEN" \
+                            --data "{\"tag_name\": \"v$VERSION\", \"name\": \"$VERSION\", \"body\": \"Automated release.\"}" \
+                            https://api.github.com/repos/${CIRCLE_PROJECT_USERNAME}/${CIRCLE_PROJECT_REPONAME}/releases)
+            UPLOAD_URL="$(echo "$RESPONSE" | jq -r .upload_url | sed -e "s/{?name,label}//")"
+            curl -H "Content-Type: application/zip" \
+                 --include \
+                 --fail \
+                 --silent \
+                 --location \
+                 -H "Authorization: token $GITHUB_TOKEN" \
+                 --data-binary "@target/scala-2.12/authentication-service-assembly-$VERSION.jar" \
+                 "${UPLOAD_URL}?name=ref-ledger-authenticator-$VERSION.jar"
+            git checkout build.sbt
+      - save_cache:
+          paths:
+            - ~/.m2
+          key: v1-dependencies--{{ checksum "build.sbt" }}
 
   blackduck_scan:
     parameters:
       daml_sdk_version:
-        type: string  
+        type: string
     docker:
       - image: circleci/openjdk:11.0-jdk
 
@@ -85,7 +134,7 @@ jobs:
             - v1-dependencies-
       - install_sdk:
           version: << parameters.daml_sdk_version >>
-      - run: 
+      - run:
            name: Build
            command: |
              export PATH=${HOME}/.daml/bin:${PATH}
@@ -99,13 +148,18 @@ jobs:
             --detect.excluded.detector.types=SBT \
             --detect.notices.report=true \
             --detect.report.timeout=480 \
-            
+
 workflows:
   version: 2
   build_and_test:
     jobs:
       - build:
           daml_sdk_version: "1.2.0"
+      - release_to_github:
+          daml_sdk_version: "1.2.0"
+          filters:
+            branches:
+              only: master
 
   blackduck:
     triggers:

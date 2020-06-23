@@ -32,6 +32,10 @@ run: $(runner)
 scala-test:
 	sbt test
 
+.PHONY: assembly
+assembly: $(dar)
+	sbt 'set test in assembly := {}' clean assembly
+
 .PHONY: clean
 clean:
 	rm -fr scala-codegen/src

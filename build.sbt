@@ -68,3 +68,32 @@ Compile / unmanagedSourceDirectories += baseDirectory.value / "scala-codegen" / 
 enablePlugins(PackPlugin)
 
 packMain := Map("authentication-service" -> "com.projectdabl.authenticationservice.Main")
+
+// There are name clashes between files in some dependencies. The assmebly
+// plugin will by default error out if two files (from different dependencies)
+// with the same name have different content, which is probably better than the
+// default JVM behaviour of depending on classpath order to choose which one to
+// load.
+//
+// See https://github.com/sbt/sbt-assembly#merge-strategy for more info.
+assemblyMergeStrategy in assembly := {
+ case PathList("META-INF", "io.netty.versions.properties") => MergeStrategy.discard
+ case PathList("google", "protobuf", "field_mask.proto") => MergeStrategy.discard
+ case PathList("module-info.class") => MergeStrategy.discard
+ case PathList("org", "checkerframework", "checker", "nullness", "compatqual", "KeyForDecl.class") => MergeStrategy.first
+ case PathList("org", "checkerframework", "checker", "nullness", "compatqual", "KeyForType.class") => MergeStrategy.first
+ case PathList("org", "checkerframework", "checker", "nullness", "compatqual", "MonotonicNonNullDecl.class") => MergeStrategy.first
+ case PathList("org", "checkerframework", "checker", "nullness", "compatqual", "NonNullDecl.class") => MergeStrategy.first
+ case PathList("org", "checkerframework", "checker", "nullness", "compatqual", "PolyNullDecl.class") => MergeStrategy.first
+ case PathList("org", "checkerframework", "checker", "nullness", "compatqual", "MonotonicNonNullType.class") => MergeStrategy.first
+ case PathList("org", "checkerframework", "checker", "nullness", "compatqual", "NonNullType.class") => MergeStrategy.first
+ case PathList("org", "checkerframework", "checker", "nullness", "compatqual", "NullableDecl.class") => MergeStrategy.first
+ case PathList("org", "checkerframework", "checker", "nullness", "compatqual", "NullableType.class") => MergeStrategy.first
+ case PathList("org", "checkerframework", "checker", "nullness", "compatqual", "PolyNullType.class") => MergeStrategy.first
+ case PathList("org", "checkerframework", "checker", "nullness", "compatqual", "MonotonicNonNullType.class") => MergeStrategy.first
+ case PathList("org", "checkerframework", "checker", "nullness", "compatqual", "NonNullType.class") => MergeStrategy.first
+ case PathList("org", "checkerframework", "checker", "nullness", "compatqual", "NullableDecl.class") => MergeStrategy.first
+ case PathList("org", "checkerframework", "checker", "nullness", "compatqual", "NullableType.class") => MergeStrategy.first
+ case PathList("org", "checkerframework", "checker", "nullness", "compatqual", "PolyNullType.class") => MergeStrategy.first
+ case x => (assemblyMergeStrategy in assembly).value(x)
+}
