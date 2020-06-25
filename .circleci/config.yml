@@ -148,7 +148,11 @@ jobs:
             --logging.level.com.synopsys.integration=DEBUG \
             --detect.excluded.detector.types=SBT \
             --detect.notices.report=true \
+            --detect.cleanup=false \
+            --detect.cleanup.bdio.files=false \
             --detect.report.timeout=480 \
+      - store_artifacts:
+          path: /home/circleci/blackduck/runs            
 
 workflows:
   version: 2
@@ -163,13 +167,13 @@ workflows:
               only: master
 
   blackduck:
-    triggers:
-      - schedule:
-          cron: "0 0 * * 1-5"
-          filters:
-            branches:
-              only:
-                - master
+#    triggers:
+#      - schedule:
+#          cron: "0 0 * * 1-5"
+#          filters:
+#            branches:
+#             only:
+#                - master
     jobs:
       - blackduck_scan:
           daml_sdk_version: "1.2.0"
