@@ -172,7 +172,7 @@ workflows:
           cron: "0 0 * * 1-5"
           filters:
             branches:
-             only:
+              only:
                 - master
     jobs:
       - blackduck_scan:
