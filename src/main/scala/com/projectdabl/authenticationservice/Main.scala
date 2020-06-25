@@ -125,7 +125,7 @@ object Main extends LazyLogging {
             rsaKeyPair,
             keyId,
             serviceConfig.jwtConfig.issuer,
-            Duration(serviceConfig.jwtConfig.validityDuration.toSeconds, SECONDS)
+            Duration(serviceConfig.jwtConfig.validityDuration.getSeconds, SECONDS)
           ),
           cubbyHole,
           serviceConfig.serviceConfig

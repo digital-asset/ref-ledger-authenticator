@@ -23,7 +23,7 @@ The project uses a makefile to order its build steps, and Scala codegen, which i
 
 ## Dependencies
 
-* JDK >= 11
+* JDK >= 8
 * Daml SDK >= 1.2.0
 
 ## Related
