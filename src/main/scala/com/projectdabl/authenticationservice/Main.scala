@@ -3,7 +3,7 @@
 
 package com.projectdabl.authenticationservice
 
-import java.io.{InputStream, FileInputStream}
+import java.io.{FileInputStream, InputStream}
 import java.time.{Clock, ZoneId}
 import java.util.UUID
 
@@ -25,7 +25,7 @@ import com.projectdabl.authenticationservice.key.RSAKeyPairGenerator
 import com.projectdabl.authenticationservice.route.ServiceAccountRouteBuilder
 import com.projectdabl.authenticationservice.service.code.CodeGeneratorImpl
 import com.projectdabl.authenticationservice.service.cubby.CubbyHoleImpl
-import com.projectdabl.authenticationservice.service.jwt.{JwtAuthenticatorImpl, JwtMinterImpl}
+import com.projectdabl.authenticationservice.service.jwt.{JwtJwkAuthenticatorImpl, JwtMinterImpl, SerialJwtAuthenticator, StaticJwtAuthenticator}
 import com.projectdabl.authenticationservice.service.ledger.AdminLedgerServiceImpl
 import com.projectdabl.authenticationservice.service.password.PasswordAuthenticatorImpl
 import com.typesafe.config.{Config, ConfigFactory}
@@ -90,7 +90,7 @@ object Main extends LazyLogging {
       val uploadDarFileRequest = new UploadDarFileRequest(bs)
       packageManagementService.uploadDarFile(uploadDarFileRequest)
     } finally {
-      is.close
+      is.close()
     }
   }
 
@@ -115,11 +115,13 @@ object Main extends LazyLogging {
       rsaKeyPair = RSAKeyPairGenerator().generate()
       keyId = s"a-s-${UUID.randomUUID()}"
       jwks = JwksAssembler().assembleJwks(rsaKeyPair.publicKey, keyId)
+      staticA = StaticJwtAuthenticator(rsaKeyPair.publicKey)
+      jwtJwkA = JwtJwkAuthenticatorImpl(serviceConfig.jwksConfig)
       binding <- Http().bindAndHandle(
         ServiceAccountRouteBuilder(
           adminLedgerService,
           jwks,
-          JwtAuthenticatorImpl(serviceConfig.jwksConfig),
+          SerialJwtAuthenticator(Seq(staticA, jwtJwkA)),
           PasswordAuthenticatorImpl(adminLedgerService),
           JwtMinterImpl(
             rsaKeyPair,
@@ -128,7 +130,7 @@ object Main extends LazyLogging {
             Duration(serviceConfig.jwtConfig.validityDuration.getSeconds, SECONDS)
           ),
           cubbyHole,
-          serviceConfig.serviceConfig
+          serviceConfig
         ).route,
         interface = serviceConfig.serviceConfig.address,
         port = serviceConfig.serviceConfig.port)
