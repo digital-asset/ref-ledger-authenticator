@@ -8,6 +8,8 @@ import java.time.Duration
 
 import com.typesafe.config.Config
 
+import scala.util.Try
+
 object AuthenticationServiceConfig {
   def apply(config: Config): AuthenticationServiceConfig =
     AuthenticationServiceConfig(
@@ -18,7 +20,7 @@ object AuthenticationServiceConfig {
       ),
       LedgerConfig(
         ledgerUrl = config.getString("ledger.url"),
-        preloadPath = config.getString("ledger.preloadPath"),
+        preloadPath = Try { config.getString("ledger.preloadPath") }.toOption,
         serviceParty = config.getString("ledger.serviceParty")
       ),
       JwtConfig(
@@ -48,7 +50,7 @@ final case class AuthenticationServiceConfig(
 
 final case class ServiceConfig(address: String, port: Int, allowedConsoleOrigin: String)
 
-final case class LedgerConfig(ledgerUrl: String, preloadPath: String, serviceParty: String)
+final case class LedgerConfig(ledgerUrl: String, preloadPath: Option[String], serviceParty: String)
 
 final case class JwtConfig(issuer: String, validityDuration: Duration)
 

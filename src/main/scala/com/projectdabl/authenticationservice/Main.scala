@@ -3,7 +3,7 @@
 
 package com.projectdabl.authenticationservice
 
-import java.io.FileInputStream
+import java.io.{InputStream, FileInputStream}
 import java.time.{Clock, ZoneId}
 import java.util.UUID
 
@@ -75,12 +75,23 @@ object Main extends LazyLogging {
       ledgerUri.authority.port,
       clientConfig)(ec, esf)
 
+  private def preloadPathAsStream(path: Option[String]): InputStream = {
+    path match {
+      case None => getClass.getClassLoader.getResourceAsStream("daml.dar")
+      case Some(p) => new FileInputStream(p)
+    }
+  }
+
   private def uploadDar(packageManagementService: PackageManagementServiceStub,
-                        darPath: String): Future[UploadDarFileResponse] = {
-    val fileInputStream = new FileInputStream(darPath)
-    val fileByteString = ByteString.readFrom(fileInputStream)
-    val uploadDarFileRequest = new UploadDarFileRequest(fileByteString)
-    packageManagementService.uploadDarFile(uploadDarFileRequest)
+                        preloadPath: Option[String]): Future[UploadDarFileResponse] = {
+    val is = preloadPathAsStream(preloadPath)
+    try {
+      val bs = ByteString.readFrom(is)
+      val uploadDarFileRequest = new UploadDarFileRequest(bs)
+      packageManagementService.uploadDarFile(uploadDarFileRequest)
+    } finally {
+      is.close
+    }
   }
 
   def main(args: Array[String]): Unit = {
