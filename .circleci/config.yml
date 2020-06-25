@@ -148,7 +148,11 @@ jobs:
             --logging.level.com.synopsys.integration=DEBUG \
             --detect.excluded.detector.types=SBT \
             --detect.notices.report=true \
+            --detect.cleanup=false \
+            --detect.cleanup.bdio.files=false \
             --detect.report.timeout=480 \
+      - store_artifacts:
+          path: /home/circleci/blackduck/runs            
 
 workflows:
   version: 2
