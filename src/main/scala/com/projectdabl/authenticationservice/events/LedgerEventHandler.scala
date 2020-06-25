@@ -134,7 +134,7 @@ class LedgerEventHandler(val ledgerClient: LedgerClient,
         val salt = codeGenerator.genCode(serviceAccountConfig.saltLength)
         val hash = expandKey(credential, salt)
         val issueTime = readClock()
-        val expiryTime = readClock(issueTime.plus(serviceAccountConfig.validityDuration.toSeconds, ChronoUnit.SECONDS))
+        val expiryTime = readClock(issueTime.plus(serviceAccountConfig.validityDuration.getSeconds, ChronoUnit.SECONDS))
 
         cubbyHole.put(CredentialCoordinate(saCredRequestC.value.owner, credentialId), credential)
 
