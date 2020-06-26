@@ -150,7 +150,7 @@ jobs:
             --detect.notices.report=true \
             --detect.cleanup=false \
             --detect.cleanup.bdio.files=false \
-            --detect.report.timeout=480 \
+            --detect.report.timeout=1000 \
       - store_artifacts:
           path: /home/circleci/blackduck/runs            
 
@@ -169,7 +169,7 @@ workflows:
   blackduck:
     triggers:
       - schedule:
-          cron: "0 0 * * 1-5"
+          cron: "0 8 * * 1-5"
           filters:
             branches:
               only:
