@@ -5,9 +5,9 @@ package com.projectdabl.authenticationservice.service.jwt
 
 import java.time.Clock
 
-import com.projectdabl.authenticationservice.api.ServiceAccountIdentity
+import com.projectdabl.authenticationservice.api.{ServiceAccountIdentity, UserIdentity}
 
 trait JwtMinter {
-  def mintJwt(serviceAccountIdentity: ServiceAccountIdentity)(implicit clock: Clock): String
+  def mintSaJwt(serviceAccountIdentity: ServiceAccountIdentity)(implicit clock: Clock): String
 }
 

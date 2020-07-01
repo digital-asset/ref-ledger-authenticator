@@ -13,26 +13,29 @@ import scala.util.Try
 object AuthenticationServiceConfig {
   def apply(config: Config): AuthenticationServiceConfig =
     AuthenticationServiceConfig(
-      ServiceConfig(
+      testMode = config.getBoolean("testMode"),
+      serviceConfig = ServiceConfig(
         address = config.getString("service.address"),
         port = config.getInt("service.port"),
         allowedConsoleOrigin = config.getString("service.allowedConsoleOrigin")
       ),
-      LedgerConfig(
+      ledgerConfig = LedgerConfig(
         ledgerUrl = config.getString("ledger.url"),
-        preloadPath = Try { config.getString("ledger.preloadPath") }.toOption,
+        preloadPath = Try {
+          config.getString("ledger.preloadPath")
+        }.toOption,
         serviceParty = config.getString("ledger.serviceParty")
       ),
-      JwtConfig(
+      jwtConfig = JwtConfig(
         issuer = config.getString("jwt.issuer"),
         validityDuration = config.getDuration("jwt.validityDuration")
       ),
-      JwksConfig(
+      jwksConfig = JwksConfig(
         new URL(config.getString("jwks.endpoint")), // note: throws
         connTimeout = config.getDuration("jwks.connTimeout"),
         readTimeout = config.getDuration("jwks.readTimeout")
       ),
-      ServiceAccountConfig(
+      serviceAccountConfig = ServiceAccountConfig(
         config.getDuration("serviceAccount.validityDuration"),
         config.getInt("serviceAccount.credLength"),
         config.getInt("serviceAccount.saltLength")
@@ -41,12 +44,12 @@ object AuthenticationServiceConfig {
 }
 
 final case class AuthenticationServiceConfig(
+  testMode: Boolean,
   serviceConfig: ServiceConfig,
   ledgerConfig: LedgerConfig,
   jwtConfig: JwtConfig,
   jwksConfig: JwksConfig,
-  serviceAccountConfig: ServiceAccountConfig
-)
+  serviceAccountConfig: ServiceAccountConfig)
 
 final case class ServiceConfig(address: String, port: Int, allowedConsoleOrigin: String)
 

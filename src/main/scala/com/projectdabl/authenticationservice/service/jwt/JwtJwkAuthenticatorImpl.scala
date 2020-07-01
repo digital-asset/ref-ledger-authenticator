@@ -11,9 +11,9 @@ import pdi.jwt.{JwtAlgorithm, JwtOptions, JwtSprayJson}
 
 import scala.util.Try
 
-object JwtAuthenticatorImpl {
-  def apply(jwksConfig: JwksConfig): JwtAuthenticatorImpl =
-    new JwtAuthenticatorImpl(
+object JwtJwkAuthenticatorImpl {
+  def apply(jwksConfig: JwksConfig): JwtJwkAuthenticatorImpl =
+    new JwtJwkAuthenticatorImpl(
       new GuavaCachedJwkProvider(
         new UrlJwkProvider(
           jwksConfig.endpoint,
@@ -24,7 +24,7 @@ object JwtAuthenticatorImpl {
     )
 }
 
-class JwtAuthenticatorImpl(jwkProvider: JwkProvider) extends JwtAuthenticator {
+class JwtJwkAuthenticatorImpl(jwkProvider: JwkProvider) extends JwtAuthenticator {
   override def oauth2Authenticator(creds: Credentials): Option[UserIdentity] =
     creds match {
       case Credentials.Missing => None

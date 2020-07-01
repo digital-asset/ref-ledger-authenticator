@@ -3,7 +3,6 @@
 
 package com.projectdabl.authenticationservice.service.jwt
 
-
 import java.time.Clock
 
 import com.projectdabl.authenticationservice.api.ServiceAccountIdentity
@@ -25,16 +24,19 @@ class JwtMinterImpl(rsaKeyPair: RSAKeyPair,
 
   import com.projectdabl.authenticationservice.api.ServiceAccountIdentityProtocol._
 
-  override def mintJwt(serviceAccountIdentity: ServiceAccountIdentity)(implicit clock: Clock): String =
-    JwtSprayJson.encode(
-      JwtHeader(JwtAlgorithm.RS256)
-        .withKeyId(keyId),
+  override def mintSaJwt(serviceAccountIdentity: ServiceAccountIdentity)(implicit clock: Clock): String =
+    mintTokenWithClaim(
       JwtClaim()
         .about(serviceAccountIdentity.party)
         .withContent(serviceAccountIdentity.toJson.compactPrint)
         .by(issuer)
-        .expiresIn(validityDuration.toSeconds),
-      rsaKeyPair.privateKey
+        .expiresIn(validityDuration.toSeconds)
     )
+
+  private def mintTokenWithClaim(jwtClaim: JwtClaim): String =
+    JwtSprayJson.encode(
+      JwtHeader(JwtAlgorithm.RS256).withKeyId(keyId),
+      jwtClaim,
+      rsaKeyPair.privateKey)
 }
 
