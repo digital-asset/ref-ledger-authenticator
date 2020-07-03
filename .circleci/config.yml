@@ -85,26 +85,50 @@ jobs:
           name: release-jar-to-github
           command: |
             export PATH=${HOME}/.daml/bin:${PATH}
+            SHA=$(git rev-parse HEAD)
             VERSION="0.0.0-snapshot-$(git show -s --format=%cd --date=format:%Y%m%d HEAD).$(git rev-list --count HEAD).$(git show -s --format=%h --abbrev=8 HEAD)"
             sed -i "s/version :=.*/version := \"$VERSION\"/" build.sbt
             make assembly
-            git tag v$VERSION
+            git checkout build.sbt
+
+            RELEASE_DIR=$(mktemp -d)
+            cp target/scala-2.12/authentication-service-assembly-$VERSION.jar $RELEASE_DIR/ref-ledger-authenticator-$VERSION.jar
+            cd $RELEASE_DIR
+            sha256sum $(find . -type f | sort) > sha256sums
+
+
+            KEY_FILE=$(mktemp)
+            GPG_DIR=$(mktemp -d)
+            cleanup() {
+                rm -rf $KEY_FILE $GPG_DIR
+            }
+            trap cleanup EXIT
+            echo "$GPG_CODE_SIGNING" | base64 -d > $KEY_FILE
+            gpg --homedir $GPG_DIR --no-tty --quiet --import $KEY_FILE
+
+            for f in *; do
+                gpg --homedir $GPG_DIR -ab $f
+            done
+
             RESPONSE=$(curl --fail \
                             --silent \
                             --location \
                             -H "Authorization: token $GITHUB_TOKEN" \
-                            --data "{\"tag_name\": \"v$VERSION\", \"name\": \"$VERSION\", \"body\": \"Automated release.\"}" \
+                            --data "{\"tag_name\": \"v$VERSION\", \"name\": \"$VERSION\", \"body\": \"Automated release.\", \"target_commitish\": \"$SHA\"}" \
                             https://api.github.com/repos/${CIRCLE_PROJECT_USERNAME}/${CIRCLE_PROJECT_REPONAME}/releases)
+
             UPLOAD_URL="$(echo "$RESPONSE" | jq -r .upload_url | sed -e "s/{?name,label}//")"
-            curl -H "Content-Type: application/zip" \
-                 --include \
-                 --fail \
-                 --silent \
-                 --location \
-                 -H "Authorization: token $GITHUB_TOKEN" \
-                 --data-binary "@target/scala-2.12/authentication-service-assembly-$VERSION.jar" \
-                 "${UPLOAD_URL}?name=ref-ledger-authenticator-$VERSION.jar"
-            git checkout build.sbt
+
+            for f in *; do
+                curl -H "Content-Type: application/zip" \
+                     --include \
+                     --fail \
+                     --silent \
+                     --location \
+                     -H "Authorization: token $GITHUB_TOKEN" \
+                     --data-binary "@$f" \
+                     "${UPLOAD_URL}?name=$f"
+            done
       - save_cache:
           paths:
             - ~/.m2
@@ -152,7 +176,7 @@ jobs:
             --detect.cleanup.bdio.files=false \
             --detect.report.timeout=1000 \
       - store_artifacts:
-          path: /home/circleci/blackduck/runs            
+          path: /home/circleci/blackduck/runs
 
 workflows:
   version: 2
