@@ -13,8 +13,10 @@ resolvers ++= Seq(
   Resolver.mavenLocal
 )
 
+val checkerExclusionRule = ExclusionRule(organization = "org.checkerframework")
+
 libraryDependencies ++= Seq(
-  "com.daml" %% "bindings-akka" % damlSDKVersion,
+  "com.daml" %% "bindings-akka" % damlSDKVersion excludeAll(checkerExclusionRule),
   "com.daml" %% "bindings-scala" % damlSDKVersion,
   "com.daml" %% "ledger-api-client" % damlSDKVersion,
   "com.daml" %% "ledger-api-domain" % damlSDKVersion,
@@ -30,7 +32,7 @@ libraryDependencies ++= Seq(
   "com.pauldijou"     %% "jwt-spray-json" % "4.1.0",
   "com.auth0"         % "jwks-rsa" % "0.11.0",
   "org.bitbucket.b_c" % "jose4j" % "0.7.1",
-
+  "com.google.guava"    % "guava" % "24.0-jre" excludeAll(checkerExclusionRule),
   "com.google.protobuf" % "protobuf-java" % "3.11.0",
 
   "com.pauldijou" %% "jwt-core" % "4.1.0",
@@ -44,6 +46,7 @@ libraryDependencies ++= Seq(
   "io.spray" %% "spray-json" % "1.3.5",
   "org.scalaz" %% "scalaz-core" % "7.2.24",
   "org.slf4j" % "slf4j-api" % "1.7.29",
+
 
   // Runtime Deps
   "ch.qos.logback" % "logback-classic" % "1.2.3" % Runtime,
@@ -69,31 +72,18 @@ enablePlugins(PackPlugin)
 
 packMain := Map("authentication-service" -> "com.projectdabl.authenticationservice.Main")
 
-// There are name clashes between files in some dependencies. The assmebly
-// plugin will by default error out if two files (from different dependencies)
-// with the same name have different content, which is probably better than the
-// default JVM behaviour of depending on classpath order to choose which one to
-// load.
-//
-// See https://github.com/sbt/sbt-assembly#merge-strategy for more info.
+logLevel in assembly := Level.Debug
+
 assemblyMergeStrategy in assembly := {
- case PathList("META-INF", "io.netty.versions.properties") => MergeStrategy.discard
- case PathList("google", "protobuf", "field_mask.proto") => MergeStrategy.discard
- case PathList("module-info.class") => MergeStrategy.discard
- case PathList("org", "checkerframework", "checker", "nullness", "compatqual", "KeyForDecl.class") => MergeStrategy.first
- case PathList("org", "checkerframework", "checker", "nullness", "compatqual", "KeyForType.class") => MergeStrategy.first
- case PathList("org", "checkerframework", "checker", "nullness", "compatqual", "MonotonicNonNullDecl.class") => MergeStrategy.first
- case PathList("org", "checkerframework", "checker", "nullness", "compatqual", "NonNullDecl.class") => MergeStrategy.first
- case PathList("org", "checkerframework", "checker", "nullness", "compatqual", "PolyNullDecl.class") => MergeStrategy.first
- case PathList("org", "checkerframework", "checker", "nullness", "compatqual", "MonotonicNonNullType.class") => MergeStrategy.first
- case PathList("org", "checkerframework", "checker", "nullness", "compatqual", "NonNullType.class") => MergeStrategy.first
- case PathList("org", "checkerframework", "checker", "nullness", "compatqual", "NullableDecl.class") => MergeStrategy.first
- case PathList("org", "checkerframework", "checker", "nullness", "compatqual", "NullableType.class") => MergeStrategy.first
- case PathList("org", "checkerframework", "checker", "nullness", "compatqual", "PolyNullType.class") => MergeStrategy.first
- case PathList("org", "checkerframework", "checker", "nullness", "compatqual", "MonotonicNonNullType.class") => MergeStrategy.first
- case PathList("org", "checkerframework", "checker", "nullness", "compatqual", "NonNullType.class") => MergeStrategy.first
- case PathList("org", "checkerframework", "checker", "nullness", "compatqual", "NullableDecl.class") => MergeStrategy.first
- case PathList("org", "checkerframework", "checker", "nullness", "compatqual", "NullableType.class") => MergeStrategy.first
- case PathList("org", "checkerframework", "checker", "nullness", "compatqual", "PolyNullType.class") => MergeStrategy.first
- case x => (assemblyMergeStrategy in assembly).value(x)
+  case "banner.txt" | "logback.xml" =>
+    MergeStrategy.first
+  case "META-INF/io.netty.versions.properties" =>
+    MergeStrategy.first
+  case "module-info.class"  =>
+    MergeStrategy.discard
+  case PathList("google", "protobuf", xs @ _*) =>
+    MergeStrategy.discard
+  case x =>
+    val oldStrategy = (assemblyMergeStrategy in assembly).value
+    oldStrategy(x)
 }
