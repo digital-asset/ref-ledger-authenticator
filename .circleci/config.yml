@@ -174,7 +174,7 @@ jobs:
             --detect.notices.report=true \
             --detect.cleanup=false \
             --detect.cleanup.bdio.files=false \
-            --detect.report.timeout=1000 \
+            --detect.report.timeout=3000 \
       - store_artifacts:
           path: /home/circleci/blackduck/runs
 
