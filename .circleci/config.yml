@@ -163,7 +163,7 @@ jobs:
             ci-build digitalasset_ref-ledger-authenticator master \
             --logging.level.com.synopsys.integration=DEBUG \
             --detect.excluded.detector.types=SBT \
-            --detect.notices.report=true \
+            --detect.notices.report=false \
             --detect.cleanup=false \
             --detect.cleanup.bdio.files=false \
             --detect.report.timeout=3000 \
