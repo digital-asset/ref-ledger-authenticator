@@ -160,13 +160,14 @@ jobs:
           name: Run Blackduck Detect
           command: |
             bash <(curl -s https://raw.githubusercontent.com/DACH-NY/security-blackduck/master/synopsys-detect) \
-            ci-build digitalasset_ref-ledger-authenticator master \
+            ci-build ${CIRCLE_PROJECT_USERNAME}_${CIRCLE_PROJECT_REPONAME} ${CIRCLE_BRANCH} \
             --logging.level.com.synopsys.integration=DEBUG \
             --detect.excluded.detector.types=SBT \
             --detect.notices.report=false \
             --detect.cleanup=false \
             --detect.cleanup.bdio.files=false \
             --detect.report.timeout=3000 \
+            
       - store_artifacts:
           path: /home/circleci/blackduck/runs
 
@@ -183,13 +184,13 @@ workflows:
               only: master
 
   blackduck:
-    triggers:
-      - schedule:
-          cron: "0 8 * * 1-5"
-          filters:
-            branches:
-              only:
-                - master
+#     triggers:
+#       - schedule:
+#           cron: "0 8 * * 1-5"
+#           filters:
+#             branches:
+#               only:
+#                 - master
     jobs:
       - blackduck_scan:
           daml_sdk_version: "1.2.0"
