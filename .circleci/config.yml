@@ -163,7 +163,7 @@ jobs:
             ci-build ${CIRCLE_PROJECT_USERNAME}_${CIRCLE_PROJECT_REPONAME} ${CIRCLE_BRANCH} \
             --logging.level.com.synopsys.integration=DEBUG \
             --detect.excluded.detector.types=SBT \
-            --detect.notices.report=true \
+            --detect.notices.report=false \
             --detect.cleanup=false \
             --detect.cleanup.bdio.files=false \
             --detect.report.timeout=3600 \
