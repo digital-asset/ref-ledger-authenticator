@@ -162,6 +162,7 @@ jobs:
             bash <(curl -s https://raw.githubusercontent.com/DACH-NY/security-blackduck/master/synopsys-detect) \
             ci-build ${CIRCLE_PROJECT_USERNAME}_${CIRCLE_PROJECT_REPONAME} ${CIRCLE_BRANCH} \
             --logging.level.com.synopsys.integration=DEBUG \
+            --detect.tools=DETECTOR,BINARY_SCAN \
             --detect.excluded.detector.types=SBT \
             --detect.notices.report=false \
             --detect.cleanup=false \
