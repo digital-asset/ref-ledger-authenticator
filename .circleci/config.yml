@@ -185,13 +185,13 @@ workflows:
               only: master
 
   blackduck:
-    triggers:
-      - schedule:
-          cron: "0 8 * * 1-5"
-          filters:
-            branches:
-              only:
-                - master
+    # triggers:
+    #   - schedule:
+    #       cron: "0 8 * * 1-5"
+    #       filters:
+    #         branches:
+    #           only:
+    #             - master
     jobs:
       - blackduck_scan:
           daml_sdk_version: "1.2.0"
