@@ -19,18 +19,18 @@ template Operator
     controller operator can
       nonconsuming OperatorFetchUser : (ContractId User, User)
         with
-          userId : Text
+          user : Party
         do
-          fetchByKey @User (operator, userId)
+          fetchByKey @User (operator, user)
 
       nonconsuming OperatorUpsertPartyAssociation : ContractId User
         with
-          userId         : Text
-          maybeNewUser   : Party -- discarded if there exists an old user
+          user           : Party
+          newUserId      : Party -- discarded if there exists an old user
         do
-          userOpt <- lookupByKey @User (operator, userId)
+          userOpt <- lookupByKey @User (operator, user)
           case userOpt of
-            None -> create User with user = maybeNewUser, ..
+            None -> create User with operator; user; userId = newUserId
             Some existingUserCid -> pure existingUserCid
 
       nonconsuming OperatorFetchServiceAccount : (ContractId ServiceAccount, ServiceAccount)
@@ -45,10 +45,10 @@ template Operator
 template ServiceAccount
   with
     operator         : Party
-    owner            : Party -- points to owning User
+    owner            : Party -- token granting system is hooked up to give access to the owning User
     ledgerId         : Text
     nonce            : Text
-    serviceAccount   : Party -- NOTE: token granting system is hooked up to give access to this party
+    serviceAccount   : Party
     credentialIds    : [Text]
   where
     signatory operator, owner
@@ -154,13 +154,13 @@ template User
   with
     operator      : Party
     user          : Party
-    userId        : Text
+    userId        : Party
   where
     signatory operator
 
     observer user
 
-    key (operator, userId) : (Party, Text)
+    key (operator, user) : (Party, Party)
     maintainer key._1
 
     controller operator can

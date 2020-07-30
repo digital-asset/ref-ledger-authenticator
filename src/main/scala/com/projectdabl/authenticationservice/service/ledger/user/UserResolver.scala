@@ -12,6 +12,7 @@ import com.projectdabl.authenticationservice.service.ledger.{CommandBuilder, Tra
 import com.typesafe.scalalogging.LazyLogging
 import scalaz.OptionT
 import scalaz.OptionT.optionT
+import com.daml.ledger.client.binding.Primitive
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -32,7 +33,7 @@ trait UserResolver extends CommandBuilder with TransactionResponseTransformer wi
               operatorC.value.operator,
               operatorC
                 .contractId
-                .exerciseOperatorFetchUser(operatorC.value.operator, userId.userId)
+                .exerciseOperatorFetchUser(operatorC.value.operator, Primitive.Party(userId.userId))
                 .command
             )
           )

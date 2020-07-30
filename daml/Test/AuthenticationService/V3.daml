@@ -18,16 +18,17 @@ createOrFetchOperatorTest =
         Some cid -> return cid
         None -> create Operator with ..
 
-createUserMappingTest userId party =
+createUserMappingTest username userid =
   scenario do
     operator <- getParty "operator"
+    user <- getParty username
     serviceOperatorCid <- createOrFetchOperatorTest
 
     submit operator do
       exercise serviceOperatorCid OperatorUpsertPartyAssociation
         with
-          userId = userId
-          maybeNewUser = party
+          user
+          newUserId = userid
 
 userDuplicatedRegistration =
   scenario do

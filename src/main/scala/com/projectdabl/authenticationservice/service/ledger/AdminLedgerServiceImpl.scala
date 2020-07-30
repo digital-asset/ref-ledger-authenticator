@@ -57,8 +57,8 @@ class AdminLedgerServiceImpl(val ledgerClient: LedgerClient,
                 .exerciseOperatorUpsertPartyAssociation(
                   operatorC.value.operator,
                   OperatorUpsertPartyAssociation(
-                    identity.userId,
-                    genAuthenticationUser()
+                    Primitive.Party(identity.userId),
+                    genAuthenticationUserId()
                   )
                 )
                 .command
@@ -92,7 +92,7 @@ class AdminLedgerServiceImpl(val ledgerClient: LedgerClient,
                 .exerciseOperatorFetchUser(
                   operatorC.value.operator,
                   OperatorFetchUser(
-                    identity.userId
+                    Primitive.Party(identity.userId)
                   )
                 ).command
             )
