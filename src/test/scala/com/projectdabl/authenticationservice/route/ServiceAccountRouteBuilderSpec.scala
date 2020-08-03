@@ -12,7 +12,7 @@ import akka.http.scaladsl.server.directives.Credentials
 import akka.http.scaladsl.testkit.ScalatestRouteTest
 import com.daml.ledger.client.binding.Primitive
 import com.projectdabl.authenticationservice.api.ServiceAccountRequestProtocol._
-import com.projectdabl.authenticationservice.api.{ServiceAccountIdentity, UserIdentity, ServiceAccountRequest => APIServiceAccountRequest}
+import com.projectdabl.authenticationservice.api.{LedgerPartyIdentity, UserIdentity, ServiceAccountRequest => APIServiceAccountRequest}
 import com.projectdabl.authenticationservice.config.AuthenticationServiceConfig
 import com.projectdabl.authenticationservice.model.DABL.AuthenticationService.V3._
 import com.projectdabl.authenticationservice.service.cubby.CubbyHole
@@ -125,7 +125,7 @@ class ServiceAccountRouteBuilderSpec
         .expects(testUserIdentity)
         .returns(testUserAuthResult)
 
-      (mockJwtMinter.mintSaJwt(_: ServiceAccountIdentity)(_: Clock))
+      (mockJwtMinter.mintSaJwt(_: LedgerPartyIdentity)(_: Clock))
         .expects(*, clock)
         .returns("{}")
 
