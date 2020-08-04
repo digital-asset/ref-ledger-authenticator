@@ -339,6 +339,27 @@ class ServiceAccountRouteBuilder(adminLedgerService: AdminLedgerService,
             }
           }
         },
+        path("loginWithUserId") {
+          authenticateBasicAsync("", pwAuthService.passwordAuthenticateAsync) { saCredHash =>
+            pathEndOrSingleSlash {
+              post {
+                log.info("in POST handler for sa login with user id: {}", saCredHash)
+
+                complete(
+                  JwtTokenResponse(token =
+                    jwtMinter.mintSaJwt(
+                      ServiceAccountIdentity(
+                        party = saCredHash.ownerId.toString,
+                        rights = Seq("read", "write:create", "write:exercise").toList,
+                        ledgerId = saCredHash.ledgerId
+                      )
+                    )
+                  )
+                )
+              }
+            }
+          }
+        },
         path("jwks") {
           get {
             complete(HttpEntity(contentType = `application/json`, string = jwks.toJson))

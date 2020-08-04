@@ -65,6 +65,7 @@ class ServiceAccountRouteBuilderSpec
           ServiceAccountRequest(
             Primitive.Party("operator"),
             Primitive.Party("user"),
+            "userId",
             testLedgerId,
             testNonce
           )
@@ -79,6 +80,7 @@ class ServiceAccountRouteBuilderSpec
           ServiceAccountCredentialRequest(
             Primitive.Party("operator"),
             Primitive.Party("owner"),
+            "ownerId",
             Primitive.Party("serviceAccount"),
             testLedgerId,
             testNonce
