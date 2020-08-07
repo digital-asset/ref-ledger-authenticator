@@ -357,7 +357,7 @@ class ServiceAccountRouteBuilder(adminLedgerService: AdminLedgerService,
                         owner = saCredHash.owner.toString,
                         party = saCredHash.ownerId,
                         rights = Seq("read", "write:create", "write:exercise").toList,
-                        partyName = "saCredHash.ownerId"
+                        partyName = saCredHash.ownerId
                       )
                     )
                   )
