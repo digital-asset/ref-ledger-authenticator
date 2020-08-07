@@ -352,10 +352,12 @@ class ServiceAccountRouteBuilder(adminLedgerService: AdminLedgerService,
                 complete(
                   JwtTokenResponse(token =
                     jwtMinter.mintSaJwt(
-                      ServiceAccountIdentity(
-                        party = saCredHash.ownerId.toString,
+                      LedgerPartyIdentity(
+                        ledgerId = saCredHash.ledgerId,
+                        owner = saCredHash.owner.toString,
+                        party = saCredHash.ownerId,
                         rights = Seq("read", "write:create", "write:exercise").toList,
-                        ledgerId = saCredHash.ledgerId
+                        partyName = "saCredHash.ownerId"
                       )
                     )
                   )
