@@ -19,14 +19,14 @@ final case class LedgerPartyIdentity(ledgerId: String,
                                      party: String,
                                      rights: List[String],
                                      partyName: String) {
-  def tokenPayload: JsObject = {
+  def tokenPayload(applicationId: String): JsObject = {
     import spray.json.DefaultJsonProtocol._
     import spray.json._
 
     JsObject(
       "https://daml.com/ledger-api" -> JsObject(
         "ledgerId" -> JsString(ledgerId),
-        "applicationId" -> JsString("DABL"),
+        "applicationId" -> JsString(applicationId),
         "actAs" -> List(party).toJson,
       ),
       "owner" -> JsString(owner),
