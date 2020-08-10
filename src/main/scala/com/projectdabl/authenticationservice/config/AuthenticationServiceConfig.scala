@@ -38,7 +38,8 @@ object AuthenticationServiceConfig {
       serviceAccountConfig = ServiceAccountConfig(
         config.getDuration("serviceAccount.validityDuration"),
         config.getInt("serviceAccount.credLength"),
-        config.getInt("serviceAccount.saltLength")
+        config.getInt("serviceAccount.saltLength"),
+        config.getString("serviceAccount.applicationId")
       )
     )
 }
@@ -59,5 +60,5 @@ final case class JwtConfig(issuer: String, validityDuration: Duration)
 
 final case class JwksConfig(endpoint: URL, connTimeout: Duration, readTimeout: Duration)
 
-final case class ServiceAccountConfig(validityDuration: Duration, credLength: Int, saltLength: Int)
+final case class ServiceAccountConfig(validityDuration: Duration, credLength: Int, saltLength: Int, applicationId: String)
 

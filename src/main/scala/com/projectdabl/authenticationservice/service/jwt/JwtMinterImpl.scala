@@ -5,7 +5,7 @@ package com.projectdabl.authenticationservice.service.jwt
 
 import java.time.Clock
 
-import com.projectdabl.authenticationservice.api.ServiceAccountIdentity
+import com.projectdabl.authenticationservice.api.LedgerPartyIdentity
 import com.projectdabl.authenticationservice.key.RSAKeyPair
 import pdi.jwt.{JwtAlgorithm, JwtClaim, JwtHeader, JwtSprayJson}
 import spray.json._
@@ -13,22 +13,27 @@ import spray.json._
 import scala.concurrent.duration.Duration
 
 object JwtMinterImpl {
-  def apply(rsaKeyPair: RSAKeyPair, keyId: String, issuer: String, validityDuration: Duration): JwtMinterImpl =
-    new JwtMinterImpl(rsaKeyPair, keyId, issuer, validityDuration)
+  def apply(rsaKeyPair: RSAKeyPair,
+            keyId: String,
+            issuer: String,
+            applicationId: String,
+            validityDuration: Duration): JwtMinterImpl =
+    new JwtMinterImpl(rsaKeyPair, keyId, issuer, applicationId, validityDuration)
 }
 
 class JwtMinterImpl(rsaKeyPair: RSAKeyPair,
                     keyId: String,
                     issuer: String,
+                    applicationId: String,
                     validityDuration: Duration) extends JwtMinter {
 
-  import com.projectdabl.authenticationservice.api.ServiceAccountIdentityProtocol._
+  import com.projectdabl.authenticationservice.api.LedgerPartyIdentityProtocol._
 
-  override def mintSaJwt(serviceAccountIdentity: ServiceAccountIdentity)(implicit clock: Clock): String =
+  override def mintSaJwt(ledgerPartyIdentity: LedgerPartyIdentity)(implicit clock: Clock): String =
     mintTokenWithClaim(
       JwtClaim()
-        .about(serviceAccountIdentity.party)
-        .withContent(serviceAccountIdentity.toJson.compactPrint)
+        .about(ledgerPartyIdentity.party)
+        .withContent(ledgerPartyIdentity.tokenPayload(applicationId).toJson.compactPrint)
         .by(issuer)
         .expiresIn(validityDuration.toSeconds)
     )
